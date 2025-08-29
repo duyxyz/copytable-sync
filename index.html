@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Copy Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#121212">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json">
+
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
@@ -74,6 +80,7 @@
   </style>
 </head>
 <body>
+  <h1>Copy Tool</h1>
   <table id="copyTable">
     <!-- Dòng mặc định -->
     <tr draggable="true"><td onclick="copyText(this,'duy1nuis')">duy1nuis <span class="copied">Copied</span></td></tr>
@@ -237,6 +244,15 @@
         }
       });
       localStorage.setItem("customItems", JSON.stringify(values));
+    }
+
+    // Đăng ký service worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .then(reg => console.log("Service Worker registered:", reg))
+          .catch(err => console.log("SW registration failed:", err));
+      });
     }
   </script>
 </body>
