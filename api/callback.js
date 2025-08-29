@@ -24,6 +24,6 @@ export default async function handler(req, res) {
     return res.status(400).json(data);
   }
 
-  // Trả token cho frontend
+  // Redirect lại về trang chủ kèm token trên URL
   return res.redirect(`/?token=${data.access_token}`);
 }

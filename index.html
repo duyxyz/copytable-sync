@@ -3,153 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <title>CopyTable Sync</title>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: #121212;
-      color: #f0f0f0;
-      margin: 0; padding: 40px;
-      text-align: center;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 15px;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 400px;
-      margin: 20px auto;
-      background: #1e1e1e;
-      border: 1px solid #333;
-    }
-    td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #333;
-      cursor: pointer;
-      text-align: left;
-    }
-    td:hover { background: #2a2a2a; }
-    .copied { color: #00ff99; font-size: 13px; margin-left: 10px; display: none; }
-    .addRow { color: #888; text-align: center; font-style: italic; }
-    .inputRow textarea {
-      width: 95%; padding: 6px; font-size: 14px;
-      background: #2a2a2a; color: #f0f0f0; border: 1px solid #444;
-    }
-  </style>
 </head>
 <body>
   <h2>CopyTable Sync</h2>
   <button id="loginBtn">Đăng nhập với GitHub</button>
 
-  <table id="copyTable" style="display:none;">
-    <tr id="addNewRow"><td class="addRow">Thêm nội dung mới...</td></tr>
-  </table>
-
   <script>
-    const CLIENT_ID = "Ov23liYPSFvbNCKxoYrB"; // Client ID GitHub OAuth App
+    const CLIENT_ID = "Ov23liYPSFvbNCKxoYrB"; // Client ID của bạn
     const REDIRECT_URI = window.location.origin + "/api/callback";
-    const GIST_ID = "YOUR_GIST_ID"; // tạo sẵn gist có file data.json
 
-    // Bấm login → chuyển tới GitHub OAuth
     document.getElementById("loginBtn").onclick = () => {
       const githubAuthUrl =
         `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=gist&redirect_uri=${REDIRECT_URI}`;
       window.location.href = githubAuthUrl;
     };
 
-    // Sau khi callback về -> lấy token từ URL, lưu vào localStorage
+    // Nhận token sau khi callback
     function handleCallback() {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("token");
       if (token) {
         localStorage.setItem("github_token", token);
-        window.history.replaceState({}, document.title, "/"); // xoá token khỏi URL
+        alert("Đăng nhập thành công!\nToken đã lưu vào localStorage.");
+        window.history.replaceState({}, document.title, "/");
       }
     }
-
     handleCallback();
-
-    // Nếu đã login
-    if (localStorage.getItem("github_token")) {
-      document.getElementById("loginBtn").style.display = "none";
-      document.getElementById("copyTable").style.display = "table";
-      loadData();
-    }
-
-    // Copy text
-    function copyText(cell, text) {
-      navigator.clipboard.writeText(text).then(() => {
-        const copied = cell.querySelector(".copied");
-        copied.style.display = "inline";
-        setTimeout(() => copied.style.display = "none", 1000);
-      });
-    }
-
-    // Load data từ gist
-    async function loadData() {
-      const token = localStorage.getItem("github_token");
-      const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-        headers: { "Authorization": `token ${token}` }
-      });
-      const gist = await res.json();
-      const content = gist.files["data.json"]?.content || "[]";
-      const data = JSON.parse(content);
-
-      const table = document.getElementById("copyTable");
-      table.innerHTML = "";
-      data.forEach(item => {
-        const row = table.insertRow();
-        const cell = row.insertCell(0);
-        cell.innerHTML = `${item} <span class="copied">Copied</span>`;
-        cell.onclick = () => copyText(cell, item);
-      });
-
-      const addRow = table.insertRow();
-      addRow.id = "addNewRow";
-      addRow.innerHTML = `<td class="addRow">Thêm nội dung mới...</td>`;
-      addRow.onclick = addNewRow;
-    }
-
-    // Save data lên gist
-    async function saveData(data) {
-      const token = localStorage.getItem("github_token");
-      await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-        method: "PATCH",
-        headers: {
-          "Authorization": `token ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          files: { "data.json": { content: JSON.stringify(data, null, 2) } }
-        })
-      });
-    }
-
-    // Thêm nội dung
-    function addNewRow() {
-      const row = document.getElementById("addNewRow");
-      row.innerHTML = `<td class="inputRow"><textarea id="newInput" rows="2" placeholder="Nhập nội dung..."></textarea></td>`;
-      const input = document.getElementById("newInput");
-      input.focus();
-      input.onkeydown = async (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          const value = input.value.trim();
-          if (value) {
-            const res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-            const gist = await res.json();
-            let items = JSON.parse(gist.files["data.json"]?.content || "[]");
-            items.push(value);
-            await saveData(items);
-            await loadData();
-          }
-        } else if (e.key === "Escape") {
-          loadData();
-        }
-      };
-    }
   </script>
 </body>
 </html>
