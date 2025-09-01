@@ -14,8 +14,6 @@
       padding: 40px;
       text-align: center;
       color: #f0f0f0;
-
-      /* Nền ảnh */
       background: url("anh.png") no-repeat center center fixed;
       background-size: cover;
     }
@@ -41,7 +39,6 @@
       cursor: pointer;
       text-align: left;
       font-size: 16px;
-
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -164,12 +161,7 @@
       cell.innerHTML = `${value} <span class="copied">Copied</span>`;
       cell.onclick = () => copyText(cell, value);
 
-      cell.oncontextmenu = (e) => {
-        e.preventDefault();
-        currentCell = cell;
-        showContextMenu(e.pageX, e.pageY);
-      };
-
+      setupCellEvents(cell);
       addDragDropEvents(row);
 
       if (save) {
@@ -179,17 +171,33 @@
       }
     }
 
+    // Setup sự kiện chuột phải + nhấn giữ
+    function setupCellEvents(cell) {
+      // Chuột phải (PC)
+      cell.oncontextmenu = (e) => {
+        e.preventDefault();
+        currentCell = cell;
+        showContextMenu(e.pageX, e.pageY);
+      };
+
+      // Nhấn giữ (Mobile)
+      let pressTimer;
+      cell.ontouchstart = (e) => {
+        pressTimer = setTimeout(() => {
+          currentCell = cell;
+          showContextMenu(e.touches[0].pageX, e.touches[0].pageY);
+        }, 500); // giữ 0.5s
+      };
+      cell.ontouchend = () => clearTimeout(pressTimer);
+    }
+
     // Load dữ liệu
     window.onload = () => {
       let saved = JSON.parse(localStorage.getItem("customItems") || "[]");
       saved.forEach(item => createRow(item, false));
 
       document.querySelectorAll("#copyTable tr[draggable]").forEach(row => {
-        row.cells[0].oncontextmenu = (e) => {
-          e.preventDefault();
-          currentCell = row.cells[0];
-          showContextMenu(e.pageX, e.pageY);
-        };
+        setupCellEvents(row.cells[0]);
         addDragDropEvents(row);
       });
     };
@@ -227,23 +235,20 @@
       } else if (popupMode === "edit" && currentCell) {
         currentCell.innerHTML = `${value} <span class="copied">Copied</span>`;
         currentCell.onclick = () => copyText(currentCell, value);
+        setupCellEvents(currentCell);
         updateLocalStorage();
       }
       closePopup();
     }
 
     // Menu chức năng
-    document.getElementById("addItem").onclick = () => {
-      openPopup("add", "");
-    };
-
+    document.getElementById("addItem").onclick = () => openPopup("add", "");
     document.getElementById("editItem").onclick = () => {
       if (currentCell) {
         let oldText = currentCell.textContent.replace("Copied", "").trim();
         openPopup("edit", oldText);
       }
     };
-
     document.getElementById("deleteItem").onclick = () => {
       if (currentCell) {
         currentCell.parentElement.remove();
@@ -275,9 +280,7 @@
       });
       row.addEventListener("dragover", (e) => {
         e.preventDefault();
-        if (row !== dragSrcRow) {
-          row.classList.add("drag-over");
-        }
+        if (row !== dragSrcRow) row.classList.add("drag-over");
       });
       row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
       row.addEventListener("drop", () => {
