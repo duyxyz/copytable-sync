@@ -5,99 +5,146 @@
   <title>Copy Tool</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#121212">
-
-  <!-- Manifest -->
   <link rel="manifest" href="manifest.json">
 
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
-      background: #121212;
       margin: 0;
       padding: 40px;
       text-align: center;
       color: #f0f0f0;
+
+      /* Nền ảnh */
+      background: url("anh.png") no-repeat center center fixed;
+      background-size: cover;
     }
+
     table {
       border-collapse: collapse;
-      width: 400px;
+      width: 100%;
+      max-width: 600px;
       margin: 20px auto;
-      background: #1e1e1e;
-      border: 1px solid #333;
+      background: rgba(30,30,30,0.65);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      border: 1px solid rgba(255,255,255,0.1);
       color: #f0f0f0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.4);
     }
+
     td {
       padding: 12px 15px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       cursor: pointer;
       text-align: left;
+      font-size: 16px;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    td:hover { background: #2a2a2a; }
+
+    td:hover {
+      background: rgba(255,255,255,0.12);
+    }
 
     .copied {
       color: #00ff99;
       font-size: 13px;
-      margin-left: 10px;
       display: none;
     }
 
-    /* Menu chuột phải */
+    /* Menu chuột phải mica */
     #contextMenu {
       position: absolute;
       display: none;
-      background: #1e1e1e;
-      border: 1px solid #333;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+      background: rgba(30,30,30,0.75);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
       z-index: 1000;
       font-size: 14px;
       color: #f0f0f0;
+      border-radius: 8px;
+      min-width: 140px;
     }
+
     #contextMenu div {
-      padding: 8px 12px;
+      padding: 10px 14px;
       cursor: pointer;
     }
-    #contextMenu div:hover { background: #2a2a2a; }
 
-    .inputRow textarea {
-      width: 95%;
-      padding: 6px;
-      font-size: 14px;
+    #contextMenu div:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* Popup mica */
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(30,30,30,0.8);
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      z-index: 2000;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    .popup textarea {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
       resize: none;
       font-family: "Segoe UI", sans-serif;
-      background: #2a2a2a;
-      color: #f0f0f0;
-      border: 1px solid #444;
-    }
-    .addRow {
-      color: #888;
-      text-align: center;
-      font-style: italic;
+      box-sizing: border-box;
     }
 
-    /* Drag and drop highlight */
-    .dragging { opacity: 0.5; }
-    .drag-over { border-top: 2px solid #00bfff; }
+    /* Responsive */
+    @media (max-width: 600px) {
+      body { padding: 15px; }
+      td { font-size: 14px; padding: 10px 12px; }
+      .popup textarea { font-size: 14px; }
+      #contextMenu { font-size: 13px; min-width: 110px; }
+    }
   </style>
 </head>
 <body>
   <table id="copyTable">
-    <!-- Dòng mặc định -->
     <tr draggable="true"><td onclick="copyText(this,'duy1nuis')">duy1nuis <span class="copied">Copied</span></td></tr>
     <tr draggable="true"><td onclick="copyText(this,'duy7nuis')">duy7nuis <span class="copied">Copied</span></td></tr>
     <tr draggable="true"><td onclick="copyText(this,'Duy@10102006')">Duy@10102006 <span class="copied">Copied</span></td></tr>
-    <!-- Dòng thêm mới -->
-    <tr id="addNewRow"><td class="addRow">Thêm nội dung mới...</td></tr>
   </table>
 
-  <!-- Menu chuột phải -->
   <div id="contextMenu">
+    <div id="addItem">Thêm</div>
     <div id="editItem">Sửa</div>
     <div id="deleteItem">Xoá</div>
+  </div>
+
+  <!-- Popup mica -->
+  <div id="popup" class="popup">
+    <textarea id="popupInput" rows="3" placeholder="Nhập nội dung..."></textarea>
   </div>
 
   <script>
     let currentCell = null;
     let dragSrcRow = null;
+    let popupMode = null; // "add" | "edit"
 
     function copyText(cell, text) {
       navigator.clipboard.writeText(text).then(() => {
@@ -111,13 +158,12 @@
 
     function createRow(value, save = true) {
       const table = document.getElementById("copyTable");
-      const row = table.insertRow(table.rows.length - 1);
+      const row = table.insertRow(table.rows.length);
       row.setAttribute("draggable", "true");
       const cell = row.insertCell(0);
       cell.innerHTML = `${value} <span class="copied">Copied</span>`;
       cell.onclick = () => copyText(cell, value);
 
-      // Menu chuột phải
       cell.oncontextmenu = (e) => {
         e.preventDefault();
         currentCell = cell;
@@ -133,35 +179,7 @@
       }
     }
 
-    // Khi nhấn vào dòng thêm mới
-    document.getElementById("addNewRow").onclick = () => {
-      const row = document.getElementById("addNewRow");
-      row.innerHTML = `
-        <td class="inputRow">
-          <textarea id="newInput" rows="2" placeholder="Nhập nội dung..."></textarea>
-        </td>`;
-      const input = document.getElementById("newInput");
-      input.focus();
-
-      input.onkeydown = (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          const value = input.value.trim();
-          if (value) {
-            createRow(value);
-            resetAddRow();
-          }
-        } else if (e.key === "Escape") {
-          resetAddRow();
-        }
-      };
-    };
-
-    function resetAddRow() {
-      document.getElementById("addNewRow").innerHTML = `<td class="addRow">Thêm nội dung mới...</td>`;
-    }
-
-    // Load dữ liệu từ localStorage
+    // Load dữ liệu
     window.onload = () => {
       let saved = JSON.parse(localStorage.getItem("customItems") || "[]");
       saved.forEach(item => createRow(item, false));
@@ -185,16 +203,44 @@
     }
     window.onclick = () => menu.style.display = "none";
 
+    // Popup
+    const popup = document.getElementById("popup");
+    const popupInput = document.getElementById("popupInput");
+
+    function openPopup(mode, defaultText = "") {
+      popupMode = mode;
+      popupInput.value = defaultText;
+      popup.style.display = "block";
+      popupInput.focus();
+    }
+
+    function closePopup() {
+      popup.style.display = "none";
+    }
+
+    function confirmPopup() {
+      const value = popupInput.value.trim();
+      if (!value) { closePopup(); return; }
+
+      if (popupMode === "add") {
+        createRow(value);
+      } else if (popupMode === "edit" && currentCell) {
+        currentCell.innerHTML = `${value} <span class="copied">Copied</span>`;
+        currentCell.onclick = () => copyText(currentCell, value);
+        updateLocalStorage();
+      }
+      closePopup();
+    }
+
     // Menu chức năng
+    document.getElementById("addItem").onclick = () => {
+      openPopup("add", "");
+    };
+
     document.getElementById("editItem").onclick = () => {
       if (currentCell) {
         let oldText = currentCell.textContent.replace("Copied", "").trim();
-        let newText = prompt("Nhập nội dung mới:", oldText);
-        if (newText && newText.trim()) {
-          currentCell.innerHTML = `${newText} <span class="copied">Copied</span>`;
-          currentCell.onclick = () => copyText(currentCell, newText.trim());
-          updateLocalStorage();
-        }
+        openPopup("edit", oldText);
       }
     };
 
@@ -205,7 +251,18 @@
       }
     };
 
-    // Drag and Drop
+    // Sự kiện bàn phím trong popup
+    popupInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        confirmPopup();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closePopup();
+      }
+    });
+
+    // Drag & Drop
     function addDragDropEvents(row) {
       row.addEventListener("dragstart", () => {
         dragSrcRow = row;
@@ -218,34 +275,32 @@
       });
       row.addEventListener("dragover", (e) => {
         e.preventDefault();
-        if (row !== dragSrcRow && !row.querySelector(".addRow")) {
+        if (row !== dragSrcRow) {
           row.classList.add("drag-over");
         }
       });
       row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
       row.addEventListener("drop", () => {
-        if (row !== dragSrcRow && !row.querySelector(".addRow")) {
+        if (row !== dragSrcRow) {
           row.classList.remove("drag-over");
           row.parentNode.insertBefore(dragSrcRow, row);
         }
       });
     }
 
-    // Cập nhật localStorage theo bảng hiện tại
+    // Update localStorage
     function updateLocalStorage() {
       let values = [];
       document.querySelectorAll("#copyTable tr").forEach(row => {
-        if (!row.querySelector(".addRow")) {
-          let text = row.cells[0].textContent.replace("Copied", "").trim();
-          if (!["duy1nuis","duy7nuis","Duy@10102006"].includes(text)) {
-            values.push(text);
-          }
+        let text = row.cells[0].textContent.replace("Copied", "").trim();
+        if (!["duy1nuis","duy7nuis","Duy@10102006"].includes(text)) {
+          values.push(text);
         }
       });
       localStorage.setItem("customItems", JSON.stringify(values));
     }
 
-    // Đăng ký service worker
+    // Service Worker
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./sw.js")
@@ -256,5 +311,3 @@
   </script>
 </body>
 </html>
-
-
