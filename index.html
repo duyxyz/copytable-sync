@@ -1,316 +1,165 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Copy Tool</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#121212">
-  <link rel="manifest" href="manifest.json">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>v</title>
   <style>
     body {
-      font-family: "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 40px;
-      text-align: center;
-      color: #f0f0f0;
-      background: url("anh.png") no-repeat center center fixed;
-      background-size: cover;
+      margin:0;
+      font:14px/1.5 "Segoe UI", Arial, sans-serif;
+      color:#fff;
+      overflow-x: hidden;
+      scrollbar-width: none; /* Firefox */
+      background: #000011; /* ✨ xanh da trời cực tối */
     }
+    body::-webkit-scrollbar { display: none; } /* Chrome, Edge, Safari */
 
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 600px;
-      margin: 20px auto;
-      background: rgba(30,30,30,0.65);
-      backdrop-filter: blur(18px) saturate(150%);
-      -webkit-backdrop-filter: blur(18px) saturate(150%);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: #f0f0f0;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 25px rgba(0,0,0,0.4);
-    }
-
-    td {
-      padding: 12px 15px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      cursor: pointer;
-      text-align: left;
-      font-size: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    td:hover {
-      background: rgba(255,255,255,0.12);
-    }
-
-    .copied {
-      color: #00ff99;
-      font-size: 13px;
-      display: none;
-    }
-
-    /* Menu chuột phải mica */
-    #contextMenu {
-      position: absolute;
-      display: none;
-      background: rgba(30,30,30,0.75);
-      backdrop-filter: blur(12px) saturate(180%);
-      -webkit-backdrop-filter: blur(12px) saturate(180%);
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-      z-index: 1000;
-      font-size: 14px;
-      color: #f0f0f0;
-      border-radius: 8px;
-      min-width: 140px;
-    }
-
-    #contextMenu div {
-      padding: 10px 14px;
-      cursor: pointer;
-    }
-
-    #contextMenu div:hover {
-      background: rgba(255,255,255,0.15);
-    }
-
-    /* Popup mica */
-    .popup {
+    #noise {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(30,30,30,0.8);
-      backdrop-filter: blur(18px) saturate(180%);
-      -webkit-backdrop-filter: blur(18px) saturate(180%);
-      border: 1px solid rgba(255,255,255,0.2);
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      z-index: 2000;
-      display: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
     }
 
-    .popup textarea {
+    article.md {
+      position: relative;
       width: 100%;
-      padding: 12px;
-      font-size: 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-      resize: none;
-      font-family: "Segoe UI", sans-serif;
+      height: 100vh;
+      background: rgba(30,30,30,0.55);
+      backdrop-filter: blur(12px);
       box-sizing: border-box;
+      overflow-y: auto;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+
+      /* ẩn scrollbar */
+      scrollbar-width: none; /* Firefox */
+    }
+    article.md::-webkit-scrollbar {
+      display: none; /* Chrome, Edge, Safari */
     }
 
-    /* Responsive */
-    @media (max-width: 600px) {
-      body { padding: 15px; }
-      td { font-size: 14px; padding: 10px 12px; }
-      .popup textarea { font-size: 14px; }
-      #contextMenu { font-size: 13px; min-width: 110px; }
+    article.md.show { opacity: 1; transform: translateY(0); }
+
+    .inner {
+      max-width: 900px;
+      margin: 15px auto;
+      padding: 0 20px 40px;
     }
+
+    .md h1,.md h2,.md h3 {
+      margin:14px 0 6px;
+      font-weight:600;
+      border-bottom:1px solid rgba(255,255,255,0.2);
+      padding-bottom:4px;
+    }
+    .md h1 { font-size:20px; }
+    .md h2 { font-size:17px; }
+    .md h3 { font-size:15px; border:none; }
+
+    .md table { border-collapse: collapse; width:100%; margin:12px 0; font-size:13px; }
+    .md th, .md td { border:1px solid rgba(255,255,255,0.2); padding:6px 10px; }
+    .md th { background: rgba(255,255,255,0.1); text-align:left; }
+    .md tr:hover td { background: rgba(255,255,255,0.05); }
+
+    .md pre {
+      background: rgba(0,0,0,0.5);
+      border:1px solid rgba(255,255,255,0.15);
+      padding:10px;
+      font-size:13px;
+      overflow:auto;
+      border-radius:4px;
+      position: relative;
+      cursor: pointer;
+      color:#fff;
+    }
+    .md code { font-family: Consolas, monospace; }
+
+    .copied-hint {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 12px;
+      color: #fff;
+      background: rgba(0,0,0,0.6);
+      padding: 2px 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      opacity: 0;
+    }
+
+    .md a { color:#4da6ff; text-decoration:none; }
+    .md a:hover { text-decoration:underline; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 </head>
 <body>
-  <table id="copyTable">
-    <tr draggable="true"><td onclick="copyText(this,'duy1nuis')">duy1nuis <span class="copied">Copied</span></td></tr>
-    <tr draggable="true"><td onclick="copyText(this,'duy7nuis')">duy7nuis <span class="copied">Copied</span></td></tr>
-    <tr draggable="true"><td onclick="copyText(this,'Duy@10102006')">Duy@10102006 <span class="copied">Copied</span></td></tr>
-  </table>
-
-  <div id="contextMenu">
-    <div id="addItem">Thêm</div>
-    <div id="editItem">Sửa</div>
-    <div id="deleteItem">Xoá</div>
-  </div>
-
-  <!-- Popup mica -->
-  <div id="popup" class="popup">
-    <textarea id="popupInput" rows="3" placeholder="Nhập nội dung..."></textarea>
-  </div>
+  <canvas id="noise"></canvas>
+  <article id="content" class="md">
+    <div class="inner">Đang tải nội dung...</div>
+  </article>
 
   <script>
-    let currentCell = null;
-    let dragSrcRow = null;
-    let popupMode = null; // "add" | "edit"
+    const url = "https://raw.githubusercontent.com/duyxyz/v/main/README.md";
 
-    function copyText(cell, text) {
-      navigator.clipboard.writeText(text).then(() => {
-        const copied = cell.querySelector(".copied");
-        if (copied) {
-          copied.style.display = "inline";
-          setTimeout(() => copied.style.display = "none", 1000);
-        }
+    function enhanceCodeBlocks() {
+      document.querySelectorAll("pre").forEach(block => {
+        const hint = document.createElement("div");
+        hint.textContent = "Copied";
+        hint.className = "copied-hint";
+        block.appendChild(hint);
+
+        block.addEventListener("click", async () => {
+          const codeEl = block.querySelector("code");
+          const text = codeEl ? codeEl.innerText : block.innerText;
+          await navigator.clipboard.writeText(text);
+
+          hint.style.opacity = 1;
+          setTimeout(() => { hint.style.opacity = 0; }, 1000);
+        });
       });
     }
 
-    function createRow(value, save = true) {
-      const table = document.getElementById("copyTable");
-      const row = table.insertRow(table.rows.length);
-      row.setAttribute("draggable", "true");
-      const cell = row.insertCell(0);
-      cell.innerHTML = `${value} <span class="copied">Copied</span>`;
-      cell.onclick = () => copyText(cell, value);
-
-      setupCellEvents(cell);
-      addDragDropEvents(row);
-
-      if (save) {
-        let saved = JSON.parse(localStorage.getItem("customItems") || "[]");
-        saved.push(value);
-        localStorage.setItem("customItems", JSON.stringify(saved));
+    async function loadMarkdown(){
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        const md = await res.text();
+        const html = marked.parse(md, { headerIds:false, mangle:false });
+        const container = document.querySelector("#content .inner");
+        container.innerHTML = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+        enhanceCodeBlocks();
+        document.getElementById("content").classList.add("show");
+      }catch(e){
+        document.querySelector("#content .inner").textContent = "Lỗi tải README";
       }
     }
+    loadMarkdown();
 
-    // Setup sự kiện chuột phải + nhấn giữ
-    function setupCellEvents(cell) {
-      // Chuột phải (PC)
-      cell.oncontextmenu = (e) => {
-        e.preventDefault();
-        currentCell = cell;
-        showContextMenu(e.pageX, e.pageY);
-      };
+    // --- Noise động mịn ---
+    const noiseCanvas = document.getElementById("noise");
+    const nctx = noiseCanvas.getContext("2d");
 
-      // Nhấn giữ (Mobile)
-      let pressTimer;
-      cell.ontouchstart = (e) => {
-        pressTimer = setTimeout(() => {
-          currentCell = cell;
-          showContextMenu(e.touches[0].pageX, e.touches[0].pageY);
-        }, 500); // giữ 0.5s
-      };
-      cell.ontouchend = () => clearTimeout(pressTimer);
+    function resizeNoise(){
+      noiseCanvas.width = window.innerWidth;
+      noiseCanvas.height = window.innerHeight;
     }
+    window.addEventListener("resize", resizeNoise);
+    resizeNoise();
 
-    // Load dữ liệu
-    window.onload = () => {
-      let saved = JSON.parse(localStorage.getItem("customItems") || "[]");
-      saved.forEach(item => createRow(item, false));
-
-      document.querySelectorAll("#copyTable tr[draggable]").forEach(row => {
-        setupCellEvents(row.cells[0]);
-        addDragDropEvents(row);
-      });
-    };
-
-    // Context menu
-    const menu = document.getElementById("contextMenu");
-    function showContextMenu(x, y) {
-      menu.style.left = x + "px";
-      menu.style.top = y + "px";
-      menu.style.display = "block";
-    }
-    window.onclick = () => menu.style.display = "none";
-
-    // Popup
-    const popup = document.getElementById("popup");
-    const popupInput = document.getElementById("popupInput");
-
-    function openPopup(mode, defaultText = "") {
-      popupMode = mode;
-      popupInput.value = defaultText;
-      popup.style.display = "block";
-      popupInput.focus();
-    }
-
-    function closePopup() {
-      popup.style.display = "none";
-    }
-
-    function confirmPopup() {
-      const value = popupInput.value.trim();
-      if (!value) { closePopup(); return; }
-
-      if (popupMode === "add") {
-        createRow(value);
-      } else if (popupMode === "edit" && currentCell) {
-        currentCell.innerHTML = `${value} <span class="copied">Copied</span>`;
-        currentCell.onclick = () => copyText(currentCell, value);
-        setupCellEvents(currentCell);
-        updateLocalStorage();
+    function drawNoise(){
+      const imgData = nctx.createImageData(noiseCanvas.width, noiseCanvas.height);
+      for(let i=0;i<imgData.data.length;i+=4){
+        const v = Math.random()*255;
+        imgData.data[i]=imgData.data[i+1]=imgData.data[i+2]=v;
+        imgData.data[i+3]=6; // alpha thấp, noise mịn
       }
-      closePopup();
+      nctx.putImageData(imgData,0,0);
+      requestAnimationFrame(drawNoise);
     }
-
-    // Menu chức năng
-    document.getElementById("addItem").onclick = () => openPopup("add", "");
-    document.getElementById("editItem").onclick = () => {
-      if (currentCell) {
-        let oldText = currentCell.textContent.replace("Copied", "").trim();
-        openPopup("edit", oldText);
-      }
-    };
-    document.getElementById("deleteItem").onclick = () => {
-      if (currentCell) {
-        currentCell.parentElement.remove();
-        updateLocalStorage();
-      }
-    };
-
-    // Sự kiện bàn phím trong popup
-    popupInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        confirmPopup();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        closePopup();
-      }
-    });
-
-    // Drag & Drop
-    function addDragDropEvents(row) {
-      row.addEventListener("dragstart", () => {
-        dragSrcRow = row;
-        row.classList.add("dragging");
-      });
-      row.addEventListener("dragend", () => {
-        row.classList.remove("dragging");
-        document.querySelectorAll("#copyTable tr").forEach(r => r.classList.remove("drag-over"));
-        updateLocalStorage();
-      });
-      row.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        if (row !== dragSrcRow) row.classList.add("drag-over");
-      });
-      row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
-      row.addEventListener("drop", () => {
-        if (row !== dragSrcRow) {
-          row.classList.remove("drag-over");
-          row.parentNode.insertBefore(dragSrcRow, row);
-        }
-      });
-    }
-
-    // Update localStorage
-    function updateLocalStorage() {
-      let values = [];
-      document.querySelectorAll("#copyTable tr").forEach(row => {
-        let text = row.cells[0].textContent.replace("Copied", "").trim();
-        if (!["duy1nuis","duy7nuis","Duy@10102006"].includes(text)) {
-          values.push(text);
-        }
-      });
-      localStorage.setItem("customItems", JSON.stringify(values));
-    }
-
-    // Service Worker
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js")
-          .then(reg => console.log("Service Worker registered:", reg))
-          .catch(err => console.log("SW registration failed:", err));
-      });
-    }
+    drawNoise();
   </script>
 </body>
 </html>
