@@ -16,6 +16,9 @@
       background: #202124;
       overflow-x: hidden;
       scrollbar-width: none;
+      user-select: none;             /* 🚫 Chặn bôi đen toàn trang */
+      -webkit-user-select: none;
+      -ms-user-select: none;
     }
     body::-webkit-scrollbar { display: none; }
 
@@ -77,6 +80,9 @@
       cursor: pointer;
       transition: background 0.12s ease;
       overflow: hidden;
+      user-select: none;         /* 🚫 Chặn bôi đen text trong code block */
+      -webkit-user-select: none;
+      -ms-user-select: none;
     }
     .md pre:hover { background: rgba(45,46,49,0.95); }
 
